@@ -276,6 +276,8 @@ void Server::ProcessPacketProtocol(int playeridx)
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
 
+                p->SyncPosition(body.dir, body.x, body.y);
+
                 wprintf(L"PACKET_ATTACK1 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);
 
@@ -300,6 +302,8 @@ void Server::ProcessPacketProtocol(int playeridx)
 
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
+
+                p->SyncPosition(body.dir, body.x, body.y);
 
                 wprintf(L"PACKET_ATTACK2 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);
@@ -326,6 +330,8 @@ void Server::ProcessPacketProtocol(int playeridx)
 
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime); 
+
+                p->SyncPosition(body.dir, body.x, body.y);
 
                 wprintf(L"PACKET_ATTACK3 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);

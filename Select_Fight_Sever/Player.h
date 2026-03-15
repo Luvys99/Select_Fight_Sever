@@ -16,9 +16,12 @@ public:
 	char Gethp() const { return hp; }
 	int Getsid() const { return sessionid; }
 
-	// 클라에서 보낸 좌표 저장
+	// START, STOP할 때 클라에서 보낸 좌표 저장 ( 동기화 )
 	void Startmove(char clientdir, short clientx, short clienty);
 	void Stopmove(short clientx, short clienty);
+
+	// ATTACK할 때 클라에서 보낸 좌표를 저장 ( 동기화 )
+	void SyncPosition(char dir, short newx, short newy);
 
 	// deltatime 만큼 서버에서 이동 처리하는 함수
 	void UpdatePosition(float deltatime);

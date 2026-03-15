@@ -23,6 +23,12 @@ void Player::Stopmove(short clientx, short clienty)
 
 }
 
+void Player::SyncPosition(char dir, short newx, short newy)
+{
+	this->dir = dir;
+	this->x = newx;
+	this->y = newy;
+}
 
 void Player::UpdatePosition(float deltatime)
 {
