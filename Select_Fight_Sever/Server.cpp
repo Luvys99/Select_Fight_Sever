@@ -26,6 +26,13 @@ void Server::Run()
     vector<SOCKET> readsocks;
     vector<SOCKET> writesocks;
 
+    // 프레임 로직을 50프레임에 맞춰서 처리하기 위한 시간 측정
+    auto logicCheckTime = chrono::steady_clock::now();
+    const auto frameDuration = chrono::milliseconds(20);
+
+    // 1초당 이동속도 계산을 위한 변수
+    const float fixedDeltatime = 0.02f;
+
     // 네트워크 로직 처리 + 프레임 로직 처리
     while (true)
     {
@@ -33,7 +40,7 @@ void Server::Run()
         readsocks.clear();
         writesocks.clear();
 
-        // 소켓 셋에 등록할 소켓들 백터에 넣어서 인자로 전달 ( 종속적으로 변수가 묶이지 않게 하기 위함 )
+        // 소켓 셋에 등록할 소켓들 백터에 넣어서 인자로 전달 ( 종속적으로 변수가 함수의 인자로 전달되서 묶이지 않게 하기 위함 - 인자에 해당하는 구조체를 수정하면 전달받는 함수가 있는 cpp까지 리빌드 됨)
         for (int i = 0; i < playermgr->GetUseCount(); i++)
         {
             readsocks.push_back(playermgr->GetPlayer(i)->GetSocket());
@@ -50,12 +57,17 @@ void Server::Run()
         CheckNetEvent();
 
         // 프레임 로직 ( 이동, 공격 )
-
-
-
+        auto currenttime = chrono::steady_clock::now();
+        if (currenttime >= logicCheckTime)
+        {
+            // 프레임 로직 처리
+            UpdateFrame(fixedDeltatime);
+            logicCheckTime += frameDuration;
+        }
+        
     }
 
-
+    
     return;
 
 }
@@ -249,11 +261,29 @@ void Server::ProcessPacketProtocol(int playeridx)
             break;
             case dfPACKET_CS_ATTACK1:
             {
+                // 먼저 디큐 하고 검증해야지 헤더는 이미 빠졌기 때문에 
+                // 그냥 break 던지면 헤더 검증에서 에러 발생
                 CS_ATTACK1 body;
                 p->RecvQ.Dequeue((char*)&body, header.h_size);
 
-                // SC_ATTACK1 메시지 보내는 함수
+                // 쿨타임이 지났는지 먼저 체크
+                ULONGLONG currenttime = GetTickCount64();
+                if (currenttime - p->GetLastAttackTime() < 300)
+                {
+                    break; // 300ms가 지나지 않았으면 공격 X
+                }
 
+                // 통과되었으면 마지막 공격 시간을 갱신
+                p->SetLastAttackTime(currenttime);
+
+                wprintf(L"PACKET_ATTACK1 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+                    p->Getsid(), body.dir, body.x, body.y);
+
+                // SC_ATTACK1 메시지 보내는 함수
+                ProcessAttack1(playeridx, body.dir, body.x, body.y);
+
+                // 공격 판정 처리
+                ProcessAttack(playeridx, 1);
             }
             break;
             case dfPACKET_CS_ATTACK2:
@@ -261,7 +291,25 @@ void Server::ProcessPacketProtocol(int playeridx)
                 CS_ATTACK2 body;
                 p->RecvQ.Dequeue((char*)&body, header.h_size);
 
+                // 쿨타임이 지났는지 먼저 체크
+                ULONGLONG currenttime = GetTickCount64();
+                if (currenttime - p->GetLastAttackTime() < 300)
+                {
+                    break; // 300ms가 지나지 않았으면 공격 X
+                }
+
+                // 통과되었으면 마지막 공격 시간을 갱신
+                p->SetLastAttackTime(currenttime);
+
+                wprintf(L"PACKET_ATTACK2 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+                    p->Getsid(), body.dir, body.x, body.y);
+
                 // SC_ATTACK2 메시지 보내는 함수
+                ProcessAttack2(playeridx, body.dir, body.x, body.y);
+
+                // 공격 판정 처리
+                ProcessAttack(playeridx, 2);
+
             }
             break;
             case dfPACKET_CS_ATTACK3:
@@ -269,7 +317,25 @@ void Server::ProcessPacketProtocol(int playeridx)
                 CS_ATTACK3 body;
                 p->RecvQ.Dequeue((char*)&body, header.h_size);
 
+                // 쿨타임이 지났는지 먼저 체크
+                ULONGLONG currenttime = GetTickCount64();
+                if (currenttime - p->GetLastAttackTime() < 300)
+                {
+                    break; // 300ms가 지나지 않았으면 공격 X
+                }
+
+                // 통과되었으면 마지막 공격 시간을 갱신
+                p->SetLastAttackTime(currenttime); 
+
+                wprintf(L"PACKET_ATTACK3 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+                    p->Getsid(), body.dir, body.x, body.y);
+
                 // SC_ATTACK3 메시지 보내는 함수
+                ProcessAttack3(playeridx, body.dir, body.x, body.y);
+
+                // 공격 판정 처리
+                ProcessAttack(playeridx, 3);
+
 
             }
             break;

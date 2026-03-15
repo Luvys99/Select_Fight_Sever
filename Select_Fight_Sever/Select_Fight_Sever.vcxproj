@@ -130,10 +130,13 @@
     <ClCompile Include="..\..\Luvys99\RingBuffer\RingBuffer\RingBuffer.cpp" />
     <ClCompile Include="..\..\Luvys99\RingBuffer\RingBuffer\Ringbuffer2.cpp" />
     <ClCompile Include="NetWorkSystem.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerList.cpp" />
     <ClCompile Include="Select_Fight_Sever.cpp" />
     <ClCompile Include="Server.cpp" />
+    <ClCompile Include="ServerFrame.cpp" />
     <ClCompile Include="ServerProtocolActionFunc.cpp" />
+    <ClCompile Include="ServerProtocolAttackFunc.cpp" />
     <ClCompile Include="ServerProtocolDeleteFunc.cpp" />
     <ClCompile Include="ServerProtocolSendFunc.cpp" />
     <ClCompile Include="SetSelect.cpp" />

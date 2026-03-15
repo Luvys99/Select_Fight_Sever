@@ -1,5 +1,6 @@
 #pragma once
 
+// 전방 선언
 class NetWorkSystem;
 class PlayerManager;
 class SetSelect;
@@ -51,6 +52,14 @@ private:
 	// ATTACK3 처리 함수
 	void ProcessAttack3(int playeridx, char clientdir, short clientx, short clienty);
 	void BroadCast_SC_Attack3(int playeridx, char clientdir, short clientx, short clienty);
+
+	// 프레임 로직 업데이트 함수
+	void UpdateFrame(float deltatime);
+
+	// 충돌 처리 함수
+	void ProcessAttack(int attackerIdx, char attackType);
+
+	void Broadcast_SC_DAMAGE(int attackidx, int targetid, char hp);
 
 private:
 	NetWorkSystem* networksystem;

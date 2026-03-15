@@ -45,6 +45,15 @@
     <ClCompile Include="ServerProtocolActionFunc.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
+    <ClCompile Include="ServerFrame.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
+    <ClCompile Include="ServerProtocolAttackFunc.cpp">
+      <Filter>소스 파일</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\..\Luvys99\RingBuffer\RingBuffer\Ringbuffer.h">

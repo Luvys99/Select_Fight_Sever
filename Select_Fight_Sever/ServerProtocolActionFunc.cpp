@@ -17,12 +17,13 @@ void Server::ProcessMoveStart(int playeridx, char clientdir, short clientx, shor
 	if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
 	{
         wprintf(L"PACKET_SC_MOVE_START | Session : %d, Direction : %d, X : %d, Y : %d\n", p->Getsid(), p->Getdir(), p->GetX(), p->GetY());
-		p->move(clientdir, clientx, clienty);
+		p->Startmove(clientdir, clientx, clienty);
 	}
 	else
 	{
         // 좌표가 많이 틀어졌다면 강제 보정 ( 서버의 부하로 인한 서버 좌표로 강제 보정 )
-		wprintf(L"wrong x, y ID : %d\n", p->Getid());
+		wprintf(L"MoveStart wrong x, y ID : %d\n", p->Getsid());
+        wprintf(L"Wrong! ServerX: %d, ClientX: %d, 차이: %d\n", p->GetX(), clientx, abs(p->GetX() - clientx));
 	}
 
 	// 좌표가 처리되었으면 해당 유저의 좌표를 모든 유저에게 전송
@@ -73,15 +74,16 @@ void Server::ProcessMoveStop(int playeridx, char clientdir, short clientx, short
     short serverx = p->GetX();
     short servery = p->GetY();
 
-    if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty))
+    if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
     {
         wprintf(L"PACKET_SC_MOVE_STOP | Session : %d, Direction : %d, X : %d, Y : %d\n", p->Getsid(), p->Getdir(), p->GetX(), p->GetY());
-        p->move(clientdir, clientx, clienty);
+        p->Stopmove(clientx, clienty);
     }
     else
     {
         // 좌표가 많이 틀어졌다면 강제 보정 ( 서버의 부하로 인한 서버 좌표로 강제 보정 )
-        wprintf(L"wrong x, y ID : %d\n", p->Getid());
+        wprintf(L"MoveStopwrong x, y ID : %d\n", p->Getsid());
+        wprintf(L"Wrong! ServerX: %d, ClientX: %d, 차이: %d\n", p->GetX(), clientx, abs(p->GetX() - clientx));
     }
 
     // 좌표가 처리되었으면 해당 유저의 좌표를 모든 유저에게 전송
@@ -138,8 +140,8 @@ void Server::BroadCast_SC_Attack1(int playerid, char clientdir, short clientx, s
 {
     PACKET_HEADER header;
     header.h_code = 0x89;
-    header.h_size = sizeof(CS_ATTACK1);
-    header.h_type = dfPACKET_CS_ATTACK1;
+    header.h_size = sizeof(SC_ATTACK1);
+    header.h_type = dfPACKET_SC_ATTACK1;
 
     SC_MOVE_STOP body;
     body.id = playerid;
@@ -180,8 +182,8 @@ void Server::BroadCast_SC_Attack2(int playerid, char clientdir, short clientx, s
 {
     PACKET_HEADER header;
     header.h_code = 0x89;
-    header.h_size = sizeof(CS_ATTACK2);
-    header.h_type = dfPACKET_CS_ATTACK2;
+    header.h_size = sizeof(SC_ATTACK2);
+    header.h_type = dfPACKET_SC_ATTACK2;
 
     SC_MOVE_STOP body;
     body.id = playerid;
@@ -222,8 +224,8 @@ void Server::BroadCast_SC_Attack3(int playerid, char clientdir, short clientx, s
 {
     PACKET_HEADER header;
     header.h_code = 0x89;
-    header.h_size = sizeof(CS_ATTACK3);
-    header.h_type = dfPACKET_CS_ATTACK3;
+    header.h_size = sizeof(SC_ATTACK3);
+    header.h_type = dfPACKET_SC_ATTACK3;
 
     SC_MOVE_STOP body;
     body.id = playerid;
