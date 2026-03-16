@@ -57,7 +57,7 @@ private:
 	void UpdateFrame(float deltatime);
 
 	// 충돌 처리 함수
-	void ProcessAttack(int attackerIdx, char attackType);
+	void ProcessAttackDecision(int attackerIdx, char attackType);
 	// 데미지 처리 브로드 캐스트
 	void Broadcast_SC_DAMAGE(int attackidx, int targetid, char hp);
 

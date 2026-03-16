@@ -67,6 +67,7 @@ void Player::UpdatePosition(float deltatime)
 		break;
 	}
 
+	// 맵 끝의 벽에 도달하면 넘어가지 않게 보정, 벽에 붙어있다는 플래그를 세움
 	bool hitwall = false;
 
 	if (realx >= dfRANGE_MOVE_RIGHT)

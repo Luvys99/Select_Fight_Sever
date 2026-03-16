@@ -88,7 +88,7 @@ void Server::Run()
 
             // 서버에서 프레임이 아닌 시간에 의존한 이동하도록 처리( 계산 )
             UpdateFrame(fixedDeltatime);
-            // 프레임 로직이
+            // 프레임 50번 돌도록 기준되는 시간에 += 20ms씩 하면서 흐른 시간이랑 비교해서 1프레임당 20ms씩 지났다면 프레임 로직 돌리고 아직 20ms가 되지 않았으면 다음 프레임으로 넘김
             logicCheckTime += frameDuration;
         }
         
@@ -109,20 +109,20 @@ void Server::CheckNetEvent()
     }
     
     // 개별 플레이어의 wset, rset 체크
-    // 이거는 받고 보내고 하는 구조는 상관없음 어처피 계속 받고 계속 보낼 거니까
+    // 접속한 플레이어들의 소켓에서 발생한 이벤트 처리 
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         SOCKET clientSock = playermgr->GetPlayer(i)->GetSocket();
 
         if (FD_ISSET(clientSock, selector->Getrset()))
         {
-            // recv 함수 호출
+            // recv 함수 호출해서 수신 큐에 저장
             HandleRecv(i);
         }
 
         if (FD_ISSET(clientSock, selector->Getwset()))
         {
-            //send함수 호출
+            //send함수 호출해서 송신 큐에서 빼서 send
             HandleSend(i);
         }
     }
@@ -177,13 +177,14 @@ void Server::HandleRecv(int playeridx)
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
-    // 링버퍼에 다이렉트러 저장
+    // 링버퍼에 다이렉트로 저장
     int Enqueuesize = p->RecvQ.DirectEnqueueSize();
     char* RecvQptr = p->RecvQ.GetRearBufferPtr();
 
     int recv_ret = recv(p->GetSocket(), RecvQptr, Enqueuesize, 0);
     if (recv_ret == SOCKET_ERROR)
     {
+        // 비정상적인 종료라면
         if (WSAGetLastError() != WSAEWOULDBLOCK)
         {
             // 플레이어 접속 끊기
@@ -220,6 +221,7 @@ void Server::HandleSend(int playeridx)
     int send_ret = send(p->GetSocket(), buf, peek_ret, 0);
     if (send_ret == SOCKET_ERROR)
     {
+        // 비정상적인 종료
         if (WSAGetLastError() != WSAEWOULDBLOCK)
         {
             //플레이어 접속 끊기
@@ -255,18 +257,19 @@ void Server::ProcessPacketProtocol(int playeridx)
         // 헤더 코드 일치하는지 확인
         if (header.h_code != 0x89)
         {
+            // 코드가 일치하지 않으면 연결 끊기
             wprintf(L"Not Equal h_code \n");
-
             DisconnectPlayer(playeridx);
             return;
         }
 
-        // 헤더밖에 안 오고 body가 오지 않았으면 처리 안함
+        // 헤더밖에 안 오고 body가 오지 않았으면 처리 안함 ( 완성된 메시지가 없으면 처리 안함 )
         if (p->RecvQ.GetUseSize() < sizeof(header) + header.h_size) break;
 
         // 헤더는 검증되었으므로 빼내기
         p->RecvQ.MoveFront(sizeof(header));
 
+        // 프로토콜 타입 별로 메시지 처리
         switch (header.h_type)
         {
             case dfPACKET_CS_MOVE_START:
@@ -294,7 +297,11 @@ void Server::ProcessPacketProtocol(int playeridx)
                 CS_ATTACK1 body;
                 p->RecvQ.Dequeue((char*)&body, header.h_size);
 
+                // -------------------------------------------------------------
                 // 쿨타임이 지났는지 먼저 체크
+                // 쿨타임은 현재 측정한 시간 - 마지막으로 공격했던 시간 
+                // 공격패킷이 와서 처리하려는 그 시점의 흐른 시간과 이전에 마지막으로 공격했던 흐른 시간을 뺀 값이다.
+                //
                 ULONGLONG currenttime = GetTickCount64();
                 if (currenttime - p->GetLastAttackTime() < 300)
                 {
@@ -304,16 +311,17 @@ void Server::ProcessPacketProtocol(int playeridx)
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
 
-                p->SyncPosition(body.dir, body.x, body.y);
+                // 방향 좌표 동기화
+                //p->SyncPosition(body.dir, body.x, body.y);
 
                 wprintf(L"PACKET_ATTACK1 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);
 
-                // SC_ATTACK1 메시지 보내는 함수
+                // 공격 모션 먼저 다른 유저에게 브로드 캐스트 ( 공격 메시지를 받고 그 공격 메시지를 다른 유저에게 브로드 캐스트 - 클라에서 그 패킷을 받으면 애니메이션이 작동될 것)
                 ProcessAttack1(playeridx, body.dir, body.x, body.y);
 
-                // 공격 판정 처리
-                ProcessAttack(playeridx, 1);
+                // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
+                ProcessAttackDecision(playeridx, 1);
             }
             break;
             case dfPACKET_CS_ATTACK2:
@@ -331,16 +339,17 @@ void Server::ProcessPacketProtocol(int playeridx)
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
 
-                p->SyncPosition(body.dir, body.x, body.y);
+                // 방향 좌표 동기화
+                //p->SyncPosition(body.dir, body.x, body.y);
 
                 wprintf(L"PACKET_ATTACK2 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);
 
-                // SC_ATTACK2 메시지 보내는 함수
+                // 공격 모션 먼저 다른 유저에게 브로드 캐스트
                 ProcessAttack2(playeridx, body.dir, body.x, body.y);
 
-                // 공격 판정 처리
-                ProcessAttack(playeridx, 2);
+                // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
+                ProcessAttackDecision(playeridx, 2);
 
             }
             break;
@@ -358,17 +367,16 @@ void Server::ProcessPacketProtocol(int playeridx)
 
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime); 
-
-                p->SyncPosition(body.dir, body.x, body.y);
+                //p->SyncPosition(body.dir, body.x, body.y);
 
                 wprintf(L"PACKET_ATTACK3 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
                     p->Getsid(), body.dir, body.x, body.y);
 
-                // SC_ATTACK3 메시지 보내는 함수
+                // 공격 모션 먼저 다른 유저에게 브로드 캐스트,
                 ProcessAttack3(playeridx, body.dir, body.x, body.y);
 
-                // 공격 판정 처리
-                ProcessAttack(playeridx, 3);
+                // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
+                ProcessAttackDecision(playeridx, 3);
 
 
             }

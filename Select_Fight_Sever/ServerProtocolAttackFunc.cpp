@@ -2,7 +2,7 @@
 #include "PlayerList.h"
 #include "ScreenDefine.h"
 
-void Server::ProcessAttack(int attackerIdx, char attackType)
+void Server::ProcessAttackDecision(int attackerIdx, char attackType)
 {
     // 1. 공격자 정보 가져오기
     Player* attacker = playermgr->GetPlayer(attackerIdx);

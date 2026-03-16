@@ -10,6 +10,7 @@ void Server::ProcessMoveStart(int playeridx, char clientdir, short clientx, shor
 	Player* p = playermgr->GetPlayer(playeridx);
 	if (p == nullptr) return;
 
+    // 현재 서버가 가지고 있는 플레이어의 좌표를 가져와서 클라이언트에서 준 좌표와 비교
 	short serverx = p->GetX();
 	short servery = p->GetY();
 
@@ -17,13 +18,17 @@ void Server::ProcessMoveStart(int playeridx, char clientdir, short clientx, shor
 	if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
 	{
         wprintf(L"PACKET_SC_MOVE_START | Session : %d, Direction : %d, X : %d, Y : %d\n", p->Getsid(), p->Getdir(), p->GetX(), p->GetY());
+        // 서버에 저장된 플레이어의 데이터에다가 클라이언트 좌표를 저장
 		p->Startmove(clientdir, clientx, clienty);
 	}
 	else
 	{
         // 좌표가 많이 틀어졌다면 강제 보정 ( 서버의 부하로 인한 서버 좌표로 강제 보정 )
 		wprintf(L"MoveStart wrong x, y ID : %d\n", p->Getsid());
-        wprintf(L"Wrong! ServerX: %d, ClientX: %d, 차이: %d\n", p->GetX(), clientx, abs(p->GetX() - clientx));
+        
+        // 강제 보정 ( 현재 서버의 좌표를 클라이언트에 전송 ) - 서버의 좌표를 신뢰함 
+        // 서버가 프레임 로직을 처리하지 못해서 클라이언트만 이동하고 서버는 이동하지 못해 좌표가 틀어졌기 때문에 서버의 좌표로 다시 클라이언트한테 전송
+        // Fix_userpos(serverx, servery);
 	}
 
 	// 좌표가 처리되었으면 해당 유저의 좌표를 모든 유저에게 전송
@@ -52,10 +57,10 @@ void Server::BroadCast_SC_MOVE_START(int playerid, char clientdir, short clientx
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 
-        // 이동하는 당사자(나)에게는 이 패킷을 보낼 필요가 없습니다. ( 내가 움직인 거니까 )
+        // 본인 제외
         if (otherPlayer->Getid() == playerid) continue;
 
-        // 다른 유저들의 송신 큐에 패킷을 꽂아줍니다.
+        // 다른 유저에게 브로드 캐스트
         otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
         otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
     }
@@ -83,7 +88,9 @@ void Server::ProcessMoveStop(int playeridx, char clientdir, short clientx, short
     {
         // 좌표가 많이 틀어졌다면 강제 보정 ( 서버의 부하로 인한 서버 좌표로 강제 보정 )
         wprintf(L"MoveStopwrong x, y ID : %d\n", p->Getsid());
-        wprintf(L"Wrong! ServerX: %d, ClientX: %d, 차이: %d\n", p->GetX(), clientx, abs(p->GetX() - clientx));
+
+        // 강제 보정 ( 현재 서버의 좌표를 클라이언트에 전송 )
+        // Fix_userpos(serverx, servery);
     }
 
     // 좌표가 처리되었으면 해당 유저의 좌표를 모든 유저에게 전송
@@ -127,9 +134,7 @@ void Server::ProcessAttack1(int playeridx, char dir, short x, short y)
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
-    // 프레임 로직 : 충돌 판정, 데미지 계산
-
-    // 프레임 로직 처리 이후 브로드 캐스트
+    // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
     BroadCast_SC_Attack1(p->Getid(), dir, x, y);
         
     return;
@@ -169,9 +174,7 @@ void Server::ProcessAttack2(int playeridx, char dir, short x, short y)
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
-    // 프레임 로직 : 충돌 판정, 데미지 계산
-
-    // 프레임 로직 처리 이후 브로드 캐스트
+    // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
     BroadCast_SC_Attack2(p->Getid(), dir, x, y);
 
     return;
@@ -211,9 +214,7 @@ void Server::ProcessAttack3(int playeridx, char dir, short x, short y)
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
-    // 프레임 로직 : 충돌 판정, 데미지 계산
-
-    // 프레임 로직 처리 이후 브로드 캐스트
+    // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
     BroadCast_SC_Attack3(p->Getid(), dir, x, y);
 
     return;
