@@ -95,13 +95,6 @@ int RingBuffer::Dequeue(char* chpDest, int iSize)
 // 데이터가 제대로 저장되었는지 확인 ( 리턴 값 : 저장된 바이트 수 )
 int RingBuffer::Peek(char* chpDest, int iSize)
 {
-	// 방어 코드 : 빼내려는 데이터보다 링버퍼에 들어있는 데이터가 작으면 종료
-	if (GetUseSize() < iSize)
-	{
-		wprintf(L"RingBuffer Peek Failed\n");
-		return -1;
-	}
-
 	// 버퍼 끝까지의 데이터 크기
 	int enddatasize = r_bufsize - r_front;
 

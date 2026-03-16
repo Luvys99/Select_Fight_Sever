@@ -12,9 +12,10 @@ void Player::Startmove(char clientdir, short clientx, short clienty)
 
 }
 
-void Player::Stopmove(short clientx, short clienty)
+void Player::Stopmove(char clientdir, short clientx, short clienty)
 {
 	isMoving = false;
+	dir = clientdir;
 	x = clientx;
 	y = clienty;
 
@@ -116,7 +117,7 @@ void Player::UpdatePosition(float deltatime)
 	wprintf(L"# gameRun: %s # SessionID: %d / X: %d / Y: %d\n", dirStr, Getsid(), x, y);
 }
 
-short Player::TakeDamage(int attackid, short damage)
+char Player::TakeDamage(int attackid, short damage)
 {
 
 	if (hp <= 0) return 0;

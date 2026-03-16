@@ -11,7 +11,7 @@ void Server::ProcessAttack(int attackerIdx, char attackType)
     // 2. 공격 타입에 따른 사거리(Range) 세팅
     int rangeX = 0;
     int rangeY = 0;
-    short damageValue = 0;
+    char damageValue = 0;
 
     switch (attackType)
     {
@@ -34,7 +34,7 @@ void Server::ProcessAttack(int attackerIdx, char attackType)
     }
 
     // 3. 서버에 있는 모든 유저를 순회하며 사거리 안에 있는지(충돌) 검사!
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* target = playermgr->GetPlayer(i);
 
@@ -100,7 +100,7 @@ void Server::Broadcast_SC_DAMAGE(int attackid, int targetid , char hp)
     body.hp = hp;
 
     // 모든 접속자에게 전송
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* p = playermgr->GetPlayer(i);
         if (p == nullptr) continue;

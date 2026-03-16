@@ -48,11 +48,11 @@ void Server::BroadCast_SC_MOVE_START(int playerid, char clientdir, short clientx
     body.y = clienty;
 
     // 모든 유저를 순회하면서
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 
-        // 이동하는 당사자(나)에게는 이 패킷을 보낼 필요가 없습니다. (내가 움직인 거니까)
+        // 이동하는 당사자(나)에게는 이 패킷을 보낼 필요가 없습니다. ( 내가 움직인 거니까 )
         if (otherPlayer->Getid() == playerid) continue;
 
         // 다른 유저들의 송신 큐에 패킷을 꽂아줍니다.
@@ -77,7 +77,7 @@ void Server::ProcessMoveStop(int playeridx, char clientdir, short clientx, short
     if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
     {
         wprintf(L"PACKET_SC_MOVE_STOP | Session : %d, Direction : %d, X : %d, Y : %d\n", p->Getsid(), p->Getdir(), p->GetX(), p->GetY());
-        p->Stopmove(clientx, clienty);
+        p->Stopmove(clientdir, clientx, clienty);
     }
     else
     {
@@ -107,7 +107,7 @@ void Server::BroadCast_SC_MOVE_STOP(int playerid, char clientdir, short clientx,
     body.x = clientx;
     body.y = clienty;
 
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 
@@ -149,7 +149,7 @@ void Server::BroadCast_SC_Attack1(int playerid, char clientdir, short clientx, s
     body.x = clientx;
     body.y = clienty;
 
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 
@@ -191,7 +191,7 @@ void Server::BroadCast_SC_Attack2(int playerid, char clientdir, short clientx, s
     body.x = clientx;
     body.y = clienty;
 
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 
@@ -233,7 +233,7 @@ void Server::BroadCast_SC_Attack3(int playerid, char clientdir, short clientx, s
     body.x = clientx;
     body.y = clienty;
 
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* otherPlayer = playermgr->GetPlayer(i);
 

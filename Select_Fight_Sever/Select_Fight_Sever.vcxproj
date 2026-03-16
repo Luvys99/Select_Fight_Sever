@@ -127,8 +127,8 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="..\..\Luvys99\RingBuffer\RingBuffer\RingBuffer.cpp" />
-    <ClCompile Include="..\..\Luvys99\RingBuffer\RingBuffer\Ringbuffer2.cpp" />
+    <ClCompile Include="..\..\RingBuffer\RingBuffer\RingBuffer.cpp" />
+    <ClCompile Include="..\..\RingBuffer\RingBuffer\Ringbuffer2.cpp" />
     <ClCompile Include="NetWorkSystem.cpp" />
     <ClCompile Include="Player.cpp" />
     <ClCompile Include="PlayerList.cpp" />
@@ -142,7 +142,7 @@
     <ClCompile Include="SetSelect.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="..\..\Luvys99\RingBuffer\RingBuffer\Ringbuffer.h" />
+    <ClInclude Include="..\..\RingBuffer\RingBuffer\Ringbuffer.h" />
     <ClInclude Include="NetStd.h" />
     <ClInclude Include="NetWorkSystem.h" />
     <ClInclude Include="PacketDefine.h" />

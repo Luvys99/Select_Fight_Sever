@@ -32,18 +32,36 @@ void Server::Run()
 
     // 1초당 이동속도 계산을 위한 변수
     const float fixedDeltatime = 0.02f;
-
-    // 네트워크 로직 처리 + 프레임 로직 처리
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------
+    // 네트워크 로직 처리 + 프레임 로직 업데이트
+    // 
+    // CheckNetEvent 함수는 클라이언트에서 보내는 메시지를 수신큐에 저장하고
+    // 서버에서 로직 처리 이후에 송신큐에 저장해놓은 메시지를 보내기만 하는 네트워크 로직 처리 함수
+    // -> 네트워크 로직 처리 함수에 프로토콜 메시지를 처리하는 함수를 추가하면 네트워크 로직만 계속 돌면서 빠르게 수신을 받고 송신해야되는데 게임 로직 처리하느라 부하가 생기고 스트레스 테스트하면 부하가 심해짐
+    // 
+    // ProcessPacketProtocol 함수는 네트워크 로직 처리와 별개로 메시지를 프로토콜 타입 별로 꺼내서 다른 클라이언트한테 알릴 것을 알리고 서버에서 충돌처리나 피격
+    // 처리를 해야하면 피격처리 후에 SendQ에 저장만 하는 프레임 로직 업데이트 함수이다.
+    // 
+    // START, MOVE는 이동, 정지 패킷이 수신되었을 때 한 번 브로드 캐스트
+    // ATTACK의 경우 두 가지 경우가 있는데 클라이언트가 공격을 요청했을 때 공격 모션을 먼저 서버에서 브로드 캐스트 해주고 이후에 피격판정하고 데미지 메시지를 브로드 캐스트해주는 방법과
+    // 공격 모션을 먼저 보내지 않고 피격판정 이후에 브로드 캐스트 해주는 방법이 존재한다.
+    // 
+    // 그러나 키보드의 경우 조각감에 예민하고 마우스도 공격요청으로 딱 몬스터를 클릭했을 때 공격을 하진 않더라도 어떠한 반응이 일어나야지 조작감이 좋다고 느끼기 때문에 
+    // 보통은 공격모션을 먼저 브로드캐스트하고 이후에 또 피격판정된 데미지 메시지를 브로드캐스트해서 Hp를 감소시키고 임팩트라든지 몬스터가 타격되었다라는 이팩트가 추가로 발생하게 만든다.
+    // ------------------------------------------------------------------------------------------------------------------------------------------------------------
     while (true)
     {
         // 매 루프 마다 벡터를 비워줘야 함
         readsocks.clear();
         writesocks.clear();
 
-        // 소켓 셋에 등록할 소켓들 백터에 넣어서 인자로 전달 ( 종속적으로 변수가 함수의 인자로 전달되서 묶이지 않게 하기 위함 - 인자에 해당하는 구조체를 수정하면 전달받는 함수가 있는 cpp까지 리빌드 됨)
-        for (int i = 0; i < playermgr->GetUseCount(); i++)
+        // 소켓 셋에 등록할 소켓들 백터에 넣어서 인자로 전달 
+        // 종속적으로 변수가 함수의 인자로 전달되서 묶이지 않게 하기 위함 ( 인자에 해당하는 구조체를 수정하면 전달받는 함수가 있는 cpp까지 리빌드 됨 ) 
+        for (int i = 0; i < playermgr->GetUserCount(); i++)
         {
+            // rset셋은 항상 등록
             readsocks.push_back(playermgr->GetPlayer(i)->GetSocket());
+            // wset은 송신큐에 보낼 것이 있으면 등록
             if (playermgr->GetPlayer(i)->SendQ.GetUseSize() > 0)
             {
                 writesocks.push_back(playermgr->GetPlayer(i)->GetSocket());
@@ -53,15 +71,24 @@ void Server::Run()
         // select 함수 호출
         selector->SelectFunc(networksystem->GetListenSocket(), readsocks, writesocks);
 
-        // 네트워크 이벤트 처리 함수
+        // 네트워크 처리 함수
         CheckNetEvent();
 
-        // 프레임 로직 ( 이동, 공격 )
+        // 프레임 로직 처리 ( 이동, 공격 )
         auto currenttime = chrono::steady_clock::now();
         if (currenttime >= logicCheckTime)
         {
-            // 프레임 로직 처리
+            // 접속한 유저들의 수신버퍼에 들어있는 처리해야 할 프로토콜 메시지들을 순서대로 처리
+            for (int i = 0; i < playermgr->GetUserCount(); i++)
+            {
+                
+                // 인덱스를 넘겨주면 플레이어의 수신 큐에서 메시지를 꺼내서 처리
+                ProcessPacketProtocol(i);
+            }
+
+            // 서버에서 프레임이 아닌 시간에 의존한 이동하도록 처리( 계산 )
             UpdateFrame(fixedDeltatime);
+            // 프레임 로직이
             logicCheckTime += frameDuration;
         }
         
@@ -72,7 +99,7 @@ void Server::Run()
 
 }
 
-// wset, rset 체크
+
 void Server::CheckNetEvent()
 {
     // Listen socket 체크
@@ -82,7 +109,8 @@ void Server::CheckNetEvent()
     }
     
     // 개별 플레이어의 wset, rset 체크
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    // 이거는 받고 보내고 하는 구조는 상관없음 어처피 계속 받고 계속 보낼 거니까
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         SOCKET clientSock = playermgr->GetPlayer(i)->GetSocket();
 
@@ -102,6 +130,8 @@ void Server::CheckNetEvent()
     return;
 }
 
+// 클라이언트가 최초로 접속할 때 서버에서 해당 프로토콜 메시지를 받으면 캐릭터 생성, 다른 클라이언트에게 새로운 캐릭터 정보 브로드 캐스트, 
+// 새로운 클라이언트에게 기존 클라이언트 정보 송신, 송신큐에 넣었다가 다음 프레임에 송신하는 구조
 void Server::HandleAccept()
 {
     SOCKET client_sock;
@@ -171,9 +201,6 @@ void Server::HandleRecv(int playeridx)
     // Recv 받은 만큼 Rear 움직이기
     p->RecvQ.MoveRear(recv_ret);
 
-    // 받은 데이터 링버퍼에서 꺼내서 패킷 단위로 잘라서 처리하는 함수
-    ProcessPacketProtocol(playeridx);
-
     return;
 }
  
@@ -201,7 +228,8 @@ void Server::HandleSend(int playeridx)
         }
     }
 
-    //Dequeue로 뺴지 않고 포인터만 옮기기
+    // Dequeue로 뺴지 않고 포인터만 옮기기
+    // send_ret가 Len이 0이면 0을 리턴할 수 있다. 
     if (send_ret > 0)
     {
         p->SendQ.MoveFront(send_ret);

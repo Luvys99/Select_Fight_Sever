@@ -4,7 +4,7 @@
 void Server::UpdateFrame(float deltatime)
 {
 
-	for (int i = 0; i < playermgr->GetUseCount(); i++)
+	for (int i = 0; i < playermgr->GetUserCount(); i++)
 	{
 		Player* p = playermgr->GetPlayer(i);
 		if (p != nullptr)

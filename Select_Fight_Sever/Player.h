@@ -18,7 +18,7 @@ public:
 
 	// START, STOP할 때 클라에서 보낸 좌표 저장 ( 동기화 )
 	void Startmove(char clientdir, short clientx, short clienty);
-	void Stopmove(short clientx, short clienty);
+	void Stopmove(char clientdir, short clientx, short clienty);
 
 	// ATTACK할 때 클라에서 보낸 좌표를 저장 ( 동기화 )
 	void SyncPosition(char dir, short newx, short newy);
@@ -27,7 +27,7 @@ public:
 	void UpdatePosition(float deltatime);
 
 	// 플레이어 데미지 처리 Set함수
-	short TakeDamage(int attackid, short damage);
+	char TakeDamage(int attackid, short damage);
 
 	// 플레이어 공격 쿨타임 측정
 	ULONGLONG GetLastAttackTime() { return lastAttackTime; }

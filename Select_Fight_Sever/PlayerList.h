@@ -10,7 +10,7 @@ public:
 
 	void ReMovePlayer(int idx);
 
-	int GetUseCount() const { return usercount; }
+	int GetUserCount() const { return usercount; }
 	Player* GetPlayer(int idx) { return playerlist[idx]; }
 
 private:

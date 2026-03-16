@@ -37,7 +37,7 @@ void Server::SendSC_CREATE_OTHER_CHARACTER(int playerlistidx)
 
     int newplayerid = newplayer->Getid();
 
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* oldplayer = playermgr->GetPlayer(i);
 
@@ -83,7 +83,7 @@ void Server::Broadcast_CREATE_OTHER_CHARACTER(int playerlistidx)
     body.hp = newplayer->Gethp();
 
     // 현재 존재하는 유저수만큼 리스트 순회
-    for (int i = 0; i < playermgr->GetUseCount(); i++)
+    for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* oldplayer = playermgr->GetPlayer(i);
 

@@ -12,7 +12,7 @@ void Server::Broadcast_SC_DELETE_CHARACTER(int removeplayerid)
 	SC_DELETE_CHARACTER body;
 	body.id = removeplayerid;
 
-	for (int i = 0; i < playermgr->GetUseCount(); i++)
+	for (int i = 0; i < playermgr->GetUserCount(); i++)
 	{
 		Player* otherplayer = playermgr->GetPlayer(i);
 
