@@ -76,7 +76,7 @@ void Server::Run()
 
         // 프레임 로직 처리 ( 이동, 공격 )
         auto currenttime = chrono::steady_clock::now();
-        if (currenttime >= logicCheckTime)
+        while (currenttime >= logicCheckTime)
         {
             // 접속한 유저들의 수신버퍼에 들어있는 처리해야 할 프로토콜 메시지들을 순서대로 처리
             for (int i = 0; i < playermgr->GetUserCount(); i++)
@@ -305,7 +305,7 @@ void Server::ProcessPacketProtocol(int playeridx)
                 ULONGLONG currenttime = GetTickCount64();
                 if (currenttime - p->GetLastAttackTime() < 300)
                 {
-                    break; // 300ms가 지나지 않았으면 공격 X
+                    break; // 300ms가 지나지 않았으면 공격 X ( 이미 디큐했기 때문에 그대로 공격이 사라짐 씹힘 )
                 }
 
                 // 통과되었으면 마지막 공격 시간을 갱신
