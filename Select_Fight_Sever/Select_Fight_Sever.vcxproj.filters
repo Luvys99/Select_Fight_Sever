@@ -48,10 +48,10 @@
     <ClCompile Include="ServerProtocolAttackFunc.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\RingBuffer\RingBuffer\RingBuffer.cpp">
+    <ClCompile Include="RingBuffer.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\RingBuffer\RingBuffer\Ringbuffer2.cpp">
+    <ClCompile Include="Ringbuffer2.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,7 +80,7 @@
     <ClInclude Include="Server.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
-    <ClInclude Include="..\..\RingBuffer\RingBuffer\Ringbuffer.h">
+    <ClInclude Include="Ringbuffer.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
   </ItemGroup>
