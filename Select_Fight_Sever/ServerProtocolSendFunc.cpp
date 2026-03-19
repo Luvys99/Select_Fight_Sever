@@ -1,5 +1,6 @@
 #include "Server.h"
 #include "PlayerList.h"
+#include "Serialize_Buffer.h"
 
 // 새로 접속한 클라이언트에게 캐릭터 정보 생성해서 보내기
 void Server::SendSC_CREATE_MY_CHARACTER(int playerlistidx, int playerid)
@@ -7,7 +8,6 @@ void Server::SendSC_CREATE_MY_CHARACTER(int playerlistidx, int playerid)
 
     Player* newplayer = playermgr->GetPlayer(playerlistidx);
     if (newplayer == nullptr) return;
-
 
     PACKET_HEADER header;
     header.h_code = 0x89;

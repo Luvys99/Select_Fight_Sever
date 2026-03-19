@@ -2,6 +2,7 @@
 #include "PlayerList.h"
 #include <cmath> //abs 함수 ( 절대값 반환하는 함수 )
 #include "ScreenDefine.h"
+#include "Serialize_Buffer.h"
 using namespace std;
 
 // MOVE START 처리 함수

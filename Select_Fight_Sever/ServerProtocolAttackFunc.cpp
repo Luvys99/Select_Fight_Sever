@@ -1,6 +1,7 @@
 #include "Server.h"
 #include "PlayerList.h"
 #include "ScreenDefine.h"
+#include "Serialize_Buffer.h"
 
 void Server::ProcessAttackDecision(int attackerIdx, char attackType)
 {

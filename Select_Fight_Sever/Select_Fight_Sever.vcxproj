@@ -133,6 +133,8 @@
     <ClCompile Include="RingBuffer.cpp" />
     <ClCompile Include="Ringbuffer2.cpp" />
     <ClCompile Include="Select_Fight_Sever.cpp" />
+    <ClCompile Include="Serialize_Buffer_read_overloading.cpp" />
+    <ClCompile Include="Serialize_Buffer_write_overloading.cpp" />
     <ClCompile Include="Server.cpp" />
     <ClCompile Include="ServerFrame.cpp" />
     <ClCompile Include="ServerProtocolActionFunc.cpp" />
@@ -149,6 +151,7 @@
     <ClInclude Include="PlayerList.h" />
     <ClInclude Include="Ringbuffer.h" />
     <ClInclude Include="ScreenDefine.h" />
+    <ClInclude Include="Serialize_Buffer.h" />
     <ClInclude Include="Server.h" />
     <ClInclude Include="SetSelect.h" />
   </ItemGroup>
