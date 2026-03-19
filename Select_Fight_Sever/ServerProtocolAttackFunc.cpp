@@ -95,10 +95,10 @@ void Server::Broadcast_SC_DAMAGE(int attackid, int targetid , char hp)
     header.h_size = sizeof(SC_DAMAGE);
     header.h_type = dfPACKET_SC_DAMAGE;
 
-    SC_DAMAGE body;
-    body.attack_id = attackid;
-    body.damage_id = targetid;
-    body.hp = hp;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << attackid << targetid << hp;
 
     // 모든 접속자에게 전송
     for (int i = 0; i < playermgr->GetUserCount(); i++)
@@ -107,7 +107,6 @@ void Server::Broadcast_SC_DAMAGE(int attackid, int targetid , char hp)
         if (p == nullptr) continue;
 
         // Send 큐에 헤더와 바디 밀어넣기
-        p->SendQ.Enqueue((char*)&header, sizeof(PACKET_HEADER));
-        p->SendQ.Enqueue((char*)&body, sizeof(SC_DAMAGE));
+        p->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
     }
 }

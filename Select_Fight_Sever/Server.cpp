@@ -2,6 +2,7 @@
 #include "NetworkSystem.h"
 #include "PlayerList.h"
 #include "SetSelect.h"
+#include "Serialize_Buffer.h"
 
 Server::Server()
 {
@@ -266,37 +267,33 @@ void Server::ProcessPacketProtocol(int playeridx)
         // 헤더밖에 안 오고 body가 오지 않았으면 처리 안함 ( 완성된 메시지가 없으면 처리 안함 )
         if (p->RecvQ.GetUseSize() < sizeof(header) + header.h_size) break;
 
-        // 헤더는 검증되었으므로 빼내기
-        p->RecvQ.MoveFront(sizeof(header));
+        // 헤더는 검증되었으므로 제거
+        p->RecvQ.MoveFront(sizeof(PACKET_HEADER));
+
+        // 패킷 바디 크기를 빼서 직렬화 버퍼에 저장
+        char temp[1400];
+        p->RecvQ.Dequeue(temp, header.h_size);
+
+        CMessage message;
+        message.PutData(temp, header.h_size);
 
         // 프로토콜 타입 별로 메시지 처리
         switch (header.h_type)
         {
             case dfPACKET_CS_MOVE_START:
             {
-                CS_MOVE_START body;
-                p->RecvQ.Dequeue((char*)&body, header.h_size);
-
                 // SC_MOVE_START 메시지 보내는 함수
-                ProcessMoveStart(playeridx, body.dir, body.x, body.y);
+                ProcessMoveStart(playeridx, &message);
             }
             break;
             case dfPACKET_CS_MOVE_STOP:
             {
-                CS_MOVE_STOP body;
-                p->RecvQ.Dequeue((char*)&body, header.h_size);
-
                 // SC_MOVE_STOP 메시지 보내는 함수
-                ProcessMoveStop(playeridx, body.dir, body.x, body.y);
+                ProcessMoveStop(playeridx, &message);
             }
             break;
             case dfPACKET_CS_ATTACK1:
             {
-                // 먼저 디큐 하고 검증해야지 헤더는 이미 빠졌기 때문에 
-                // 그냥 break 던지면 헤더 검증에서 에러 발생
-                CS_ATTACK1 body;
-                p->RecvQ.Dequeue((char*)&body, header.h_size);
-
                 // -------------------------------------------------------------
                 // 쿨타임이 지났는지 먼저 체크
                 // 쿨타임은 현재 측정한 시간 - 마지막으로 공격했던 시간 
@@ -311,14 +308,8 @@ void Server::ProcessPacketProtocol(int playeridx)
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
 
-                // 방향 좌표 동기화
-                //p->SyncPosition(body.dir, body.x, body.y);
-
-                wprintf(L"PACKET_ATTACK1 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
-                    p->Getsid(), body.dir, body.x, body.y);
-
                 // 공격 모션 먼저 다른 유저에게 브로드 캐스트 ( 공격 메시지를 받고 그 공격 메시지를 다른 유저에게 브로드 캐스트 - 클라에서 그 패킷을 받으면 애니메이션이 작동될 것)
-                ProcessAttack1(playeridx, body.dir, body.x, body.y);
+                ProcessAttack1(playeridx, &message);
 
                 // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
                 ProcessAttackDecision(playeridx, 1);
@@ -326,9 +317,7 @@ void Server::ProcessPacketProtocol(int playeridx)
             break;
             case dfPACKET_CS_ATTACK2:
             {
-                CS_ATTACK2 body;
-                p->RecvQ.Dequeue((char*)&body, header.h_size);
-
+               
                 // 쿨타임이 지났는지 먼저 체크
                 ULONGLONG currenttime = GetTickCount64();
                 if (currenttime - p->GetLastAttackTime() < 300)
@@ -339,14 +328,8 @@ void Server::ProcessPacketProtocol(int playeridx)
                 // 통과되었으면 마지막 공격 시간을 갱신
                 p->SetLastAttackTime(currenttime);
 
-                // 방향 좌표 동기화
-                //p->SyncPosition(body.dir, body.x, body.y);
-
-                wprintf(L"PACKET_ATTACK2 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
-                    p->Getsid(), body.dir, body.x, body.y);
-
                 // 공격 모션 먼저 다른 유저에게 브로드 캐스트
-                ProcessAttack2(playeridx, body.dir, body.x, body.y);
+                ProcessAttack2(playeridx, &message);
 
                 // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
                 ProcessAttackDecision(playeridx, 2);
@@ -355,8 +338,6 @@ void Server::ProcessPacketProtocol(int playeridx)
             break;
             case dfPACKET_CS_ATTACK3:
             {
-                CS_ATTACK3 body;
-                p->RecvQ.Dequeue((char*)&body, header.h_size);
 
                 // 쿨타임이 지났는지 먼저 체크
                 ULONGLONG currenttime = GetTickCount64();
@@ -369,11 +350,8 @@ void Server::ProcessPacketProtocol(int playeridx)
                 p->SetLastAttackTime(currenttime); 
                 //p->SyncPosition(body.dir, body.x, body.y);
 
-                wprintf(L"PACKET_ATTACK3 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
-                    p->Getsid(), body.dir, body.x, body.y);
-
                 // 공격 모션 먼저 다른 유저에게 브로드 캐스트,
-                ProcessAttack3(playeridx, body.dir, body.x, body.y);
+                ProcessAttack3(playeridx, &message);
 
                 // 공격 판정 처리 후에 데미지 처리까지하고 브로드 캐스트 ( 송신 큐에 저장 )
                 ProcessAttackDecision(playeridx, 3);

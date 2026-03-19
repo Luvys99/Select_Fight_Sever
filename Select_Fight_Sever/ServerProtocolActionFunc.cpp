@@ -6,7 +6,7 @@
 using namespace std;
 
 // MOVE START 처리 함수
-void Server::ProcessMoveStart(int playeridx, char clientdir, short clientx, short clienty)
+void Server::ProcessMoveStart(int playeridx, CMessage* msg)
 {
 	Player* p = playermgr->GetPlayer(playeridx);
 	if (p == nullptr) return;
@@ -14,6 +14,11 @@ void Server::ProcessMoveStart(int playeridx, char clientdir, short clientx, shor
     // 현재 서버가 가지고 있는 플레이어의 좌표를 가져와서 클라이언트에서 준 좌표와 비교
 	short serverx = p->GetX();
 	short servery = p->GetY();
+
+    char clientdir;
+    short clientx, clienty;
+
+    *msg >> clientdir >> clientx >> clienty;
 
 	// x,y 좌표가 오차범위를 넘지 않으면 클라이언트 좌표를 신뢰한다.
 	if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
@@ -47,11 +52,10 @@ void Server::BroadCast_SC_MOVE_START(int playerid, char clientdir, short clientx
     header.h_size = sizeof(SC_MOVE_START);
     header.h_type = dfPACKET_SC_MOVE_START;
 
-    SC_MOVE_START body;
-    body.id = playerid;
-    body.dir = clientdir;
-    body.x = clientx;
-    body.y = clienty;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << playerid << clientdir << clientx << clienty;
 
     // 모든 유저를 순회하면서
     for (int i = 0; i < playermgr->GetUserCount(); i++)
@@ -62,8 +66,7 @@ void Server::BroadCast_SC_MOVE_START(int playerid, char clientdir, short clientx
         if (otherPlayer->Getid() == playerid) continue;
 
         // 다른 유저에게 브로드 캐스트
-        otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
-        otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
+        otherPlayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
     }
 
     return;
@@ -71,7 +74,7 @@ void Server::BroadCast_SC_MOVE_START(int playerid, char clientdir, short clientx
 
 
 // MOVE STOP 처리 함수
-void Server::ProcessMoveStop(int playeridx, char clientdir, short clientx, short clienty)
+void Server::ProcessMoveStop(int playeridx, CMessage* msg)
 {
 
     Player* p = playermgr->GetPlayer(playeridx);
@@ -79,6 +82,11 @@ void Server::ProcessMoveStop(int playeridx, char clientdir, short clientx, short
 
     short serverx = p->GetX();
     short servery = p->GetY();
+
+    char clientdir;
+    short clientx, clienty;
+
+    *msg >> clientdir >> clientx >> clienty;
 
     if (abs(serverx - clientx) <= dfERROR_RANGE && abs(servery - clienty) <= dfERROR_RANGE)
     {
@@ -109,11 +117,10 @@ void Server::BroadCast_SC_MOVE_STOP(int playerid, char clientdir, short clientx,
     header.h_size = sizeof(SC_MOVE_STOP);
     header.h_type = dfPACKET_SC_MOVE_STOP;
 
-    SC_MOVE_STOP body;
-    body.id = playerid;
-    body.dir = clientdir;
-    body.x = clientx;
-    body.y = clienty;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << playerid << clientdir << clientx << clienty;
 
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
@@ -121,8 +128,7 @@ void Server::BroadCast_SC_MOVE_STOP(int playerid, char clientdir, short clientx,
 
         if (otherPlayer->Getid() == playerid) continue;
 
-        otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
-        otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
+        otherPlayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
 
     }
 
@@ -130,13 +136,21 @@ void Server::BroadCast_SC_MOVE_STOP(int playerid, char clientdir, short clientx,
 }
 
 // ATTACK1 처리 함수
-void Server::ProcessAttack1(int playeridx, char dir, short x, short y)
+void Server::ProcessAttack1(int playeridx, CMessage* msg)
 {
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
+    char clientdir;
+    short clientx, clienty;
+
+    *msg >> clientdir >> clientx >> clienty;
+
+    wprintf(L"PACKET_ATTACK1 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+        p->Getsid(), clientdir, clientx, clienty);
+
     // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
-    BroadCast_SC_Attack1(p->Getid(), dir, x, y);
+    BroadCast_SC_Attack1(p->Getid(), clientdir, clientx, clienty);
         
     return;
 }
@@ -149,11 +163,10 @@ void Server::BroadCast_SC_Attack1(int playerid, char clientdir, short clientx, s
     header.h_size = sizeof(SC_ATTACK1);
     header.h_type = dfPACKET_SC_ATTACK1;
 
-    SC_MOVE_STOP body;
-    body.id = playerid;
-    body.dir = clientdir;
-    body.x = clientx;
-    body.y = clienty;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << playerid << clientdir << clientx << clienty;
 
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
@@ -161,8 +174,7 @@ void Server::BroadCast_SC_Attack1(int playerid, char clientdir, short clientx, s
 
         if (otherPlayer->Getid() == playerid) continue;
 
-        otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
-        otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
+        otherPlayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
 
     }
 
@@ -170,13 +182,21 @@ void Server::BroadCast_SC_Attack1(int playerid, char clientdir, short clientx, s
 }
 
 // ATTACK2 처리 함수
-void Server::ProcessAttack2(int playeridx, char dir, short x, short y)
+void Server::ProcessAttack2(int playeridx, CMessage* msg)
 {
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
+    char clientdir;
+    short clientx, clienty;
+
+    *msg >> clientdir >> clientx >> clienty;
+
+    wprintf(L"PACKET_ATTACK2 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+        p->Getsid(), clientdir, clientx, clienty);
+
     // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
-    BroadCast_SC_Attack2(p->Getid(), dir, x, y);
+    BroadCast_SC_Attack2(p->Getid(), clientdir, clientx, clienty);
 
     return;
 }
@@ -189,11 +209,10 @@ void Server::BroadCast_SC_Attack2(int playerid, char clientdir, short clientx, s
     header.h_size = sizeof(SC_ATTACK2);
     header.h_type = dfPACKET_SC_ATTACK2;
 
-    SC_MOVE_STOP body;
-    body.id = playerid;
-    body.dir = clientdir;
-    body.x = clientx;
-    body.y = clienty;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << playerid << clientdir << clientx << clienty;
 
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
@@ -201,8 +220,7 @@ void Server::BroadCast_SC_Attack2(int playerid, char clientdir, short clientx, s
 
         if (otherPlayer->Getid() == playerid) continue;
 
-        otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
-        otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
+        otherPlayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
 
     }
 
@@ -210,13 +228,21 @@ void Server::BroadCast_SC_Attack2(int playerid, char clientdir, short clientx, s
 }
 
 // ATTACK3 처리 함수
-void Server::ProcessAttack3(int playeridx, char dir, short x, short y)
+void Server::ProcessAttack3(int playeridx, CMessage* msg)
 {
     Player* p = playermgr->GetPlayer(playeridx);
     if (p == nullptr) return;
 
+    char clientdir;
+    short clientx, clienty;
+
+    *msg >> clientdir >> clientx >> clienty;
+
+    wprintf(L"PACKET_ATTACK3 # SessionID: %d / Dir: %d / X: %d / Y: %d\n",
+        p->Getsid(), clientdir, clientx, clienty);
+
     // 공격 모션에 대한 브로드 캐스트 ( 클라이언트에서 공격 요청을 보냈으면 거기에 해당하는 액션이 다른 클라이언트에 나오도록 브로드 캐스트 )
-    BroadCast_SC_Attack3(p->Getid(), dir, x, y);
+    BroadCast_SC_Attack3(p->Getid(), clientdir, clientx, clienty);
 
     return;
 }
@@ -229,11 +255,10 @@ void Server::BroadCast_SC_Attack3(int playerid, char clientdir, short clientx, s
     header.h_size = sizeof(SC_ATTACK3);
     header.h_type = dfPACKET_SC_ATTACK3;
 
-    SC_MOVE_STOP body;
-    body.id = playerid;
-    body.dir = clientdir;
-    body.x = clientx;
-    body.y = clienty;
+    CMessage message;
+    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+
+    message << playerid << clientdir << clientx << clienty;
 
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
@@ -241,8 +266,7 @@ void Server::BroadCast_SC_Attack3(int playerid, char clientdir, short clientx, s
 
         if (otherPlayer->Getid() == playerid) continue;
 
-        otherPlayer->SendQ.Enqueue((char*)&header, sizeof(header));
-        otherPlayer->SendQ.Enqueue((char*)&body, header.h_size);
+        otherPlayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
 
     }
 

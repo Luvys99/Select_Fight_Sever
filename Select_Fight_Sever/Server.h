@@ -1,4 +1,5 @@
 #pragma once
+#include "Serialize_Buffer.h"
 
 // 전방 선언
 class NetWorkSystem;
@@ -38,19 +39,19 @@ private:
 	void ProcessPacketProtocol(int playeridx);
 
 	// MOVE START 처리 함수
-	void ProcessMoveStart(int playeridx, char clientdir, short clientx, short clienty);
+	void ProcessMoveStart(int playeridx, CMessage* msg);
 	void BroadCast_SC_MOVE_START(int playeridx, char clientdir, short clientx, short clienty);
 	// MOVE STOP 처리 함수
-	void ProcessMoveStop(int playeridx, char clientdir, short clientx, short clienty);
+	void ProcessMoveStop(int playeridx, CMessage* msg);
 	void BroadCast_SC_MOVE_STOP(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK1 처리 함수
-	void ProcessAttack1(int playeridx, char clientdir, short clientx, short clienty);
+	void ProcessAttack1(int playeridx, CMessage* msg);
 	void BroadCast_SC_Attack1(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK2 처리 함수
-	void ProcessAttack2(int playeridx, char clientdir, short clientx, short clienty);
+	void ProcessAttack2(int playeridx, CMessage* msg);
 	void BroadCast_SC_Attack2(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK3 처리 함수
-	void ProcessAttack3(int playeridx, char clientdir, short clientx, short clienty);
+	void ProcessAttack3(int playeridx, CMessage* msg);
 	void BroadCast_SC_Attack3(int playeridx, char clientdir, short clientx, short clienty);
 
 	// 프레임 로직 업데이트 함수

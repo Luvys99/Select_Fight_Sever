@@ -31,6 +31,7 @@ void PlayerManager::ReMovePlayer(int idx)
 
 	if (idx < 0 || idx >= usercount) return;
 
+	wprintf(L"exit Sessionid : %d\n", playerlist[idx]->Getsid());
 	// 해당 플레이어의 소켓을 닫고 리스트
 	// 소켓은 소멸자에 의해 닫힘
 	delete playerlist[idx];

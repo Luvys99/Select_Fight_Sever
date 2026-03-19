@@ -39,8 +39,7 @@ public:
 	int GetBufferSize() { return buffer_size; }
 	int GetUseDataSize() 
 	{ 
-		use_size = rear - front;
-		return use_size; 
+		return rear - front;
 	}
 	char* GetBufferPtr() { return s_buffer; }
 	char* GetWritePtr() { return &s_buffer[rear]; }
