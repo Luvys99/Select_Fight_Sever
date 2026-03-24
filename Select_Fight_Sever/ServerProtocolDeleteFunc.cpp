@@ -1,18 +1,14 @@
 #include "Server.h"
 #include "PlayerList.h"
 #include "Serialize_Buffer.h"
+#include "Proxy.h"
 
 // 종료된 유저의 정보를 다른 유저에게 전송
 void Server::Broadcast_SC_DELETE_CHARACTER(int removeplayerid)
 {
-	PACKET_HEADER header;
-	header.h_code = 0x89;
-	header.h_size = sizeof(SC_DELETE_CHARACTER);
-	header.h_type = dfPACKET_SC_DELETE_CHARACTER;
+	CMessage msg;
 
-	CMessage message;
-	message.PutData((char*)&header, sizeof(PACKET_HEADER));
-	message << removeplayerid;
+	proxy_delete_character(msg, removeplayerid);
 
 	for (int i = 0; i < playermgr->GetUserCount(); i++)
 	{
@@ -20,7 +16,7 @@ void Server::Broadcast_SC_DELETE_CHARACTER(int removeplayerid)
 
 		if (otherplayer->Getid() == removeplayerid) continue;
 
-		otherplayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
+		otherplayer->SendPacket(msg);
 
 	}
 

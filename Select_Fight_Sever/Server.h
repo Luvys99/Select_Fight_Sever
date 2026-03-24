@@ -10,6 +10,7 @@ class CMessage;
 class Player;
 
 // 최상위 클래스
+// 인터페이스 클래스를 상속해서 
 class Server : public InterfacePacketHandler
 {
 public:
