@@ -1,0 +1,105 @@
+// 서버용 proxy, stub 파일 함수 원형 ( 원본 파일, 생성된 파일은 임시 파일 )
+// [방향] 반환형 함수명 패킷타입
+// 매개변수...
+// END로 끝내면 리스트에 함수 정보 저장
+
+[s2c] void proxy_create_my_character dfPACKET_SC_CREATE_MY_CHARACTER
+int id
+char dir
+short x
+short y
+char hp
+END
+
+[s2c] void proxy_create_my_other_character dfPACKET_SC_CREATE_OTHER_CHARACTER
+int id
+char dir
+short x
+short y
+char hp
+END
+
+[s2c] void make_create_my_other_character dfPACKET_SC_CREATE_OTHER_CHARACTER
+int id
+char dir
+short x
+short y
+char hp
+END
+
+[s2c] void proxy_delete_character dfPACKET_SC_DELETE_CHARACTER
+int id
+END
+
+[s2c] void proxy_move_start dfPACKET_SC_MOVE_START
+int id
+char dir
+short x
+short y
+END
+
+[s2c] void proxy_move_stop dfPACKET_SC_MOVE_STOP
+int id
+char dir
+short x
+short y
+END
+
+[s2c] void proxy_attack1 dfPACKET_SC_ATTACK1
+int id
+char dir
+short x
+short y
+END
+
+[s2c] void proxy_attack2 dfPACKET_SC_ATTACK2
+int id
+char dir
+short x
+short y
+END
+
+[s2c] void proxy_attack3 dfPACKET_SC_ATTACK3
+int id
+char dir
+short x
+short y
+END
+
+[s2c] void proxy_damage dfPACKET_SC_DAMAGE
+int attackt_id
+int damage_id
+char hp
+END
+
+// stub.h 인터페이스 클래스 가상함수 정의할 컨텐츠 함수들
+// 서버의 구조상 인자로 Player* player를 넣어야 함
+[c2s] void ProcessMoveStart dfPACKET_CS_MOVE_START
+char dir
+short x
+short y
+END
+
+[c2s] void ProcessMoveStop dfPACKET_CS_MOVE_STOP
+char dir
+short x
+short y
+END
+
+[c2s] void ProcessAttack1 dfPACKET_CS_ATTACK1
+char dir
+short x
+short y
+END
+
+[c2s] void ProcessAttack2 dfPACKET_CS_ATTACK2
+char dir
+short x
+short y
+END
+
+[c2s] void ProcessAttack3 dfPACKET_CS_ATTACK3
+char dir
+short x
+short y
+END

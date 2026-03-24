@@ -1,13 +1,16 @@
 #pragma once
-#include "Serialize_Buffer.h"
+#include "Stub.h"
 
 // 전방 선언
+// 포인터와 전방성언을 이용해서 컴파일러 입장에서 종속성이 없게 인자를 넘길 수 있음
 class NetWorkSystem;
 class PlayerManager;
 class SetSelect;
+class CMessage;
+class Player;
 
 // 최상위 클래스
-class Server
+class Server : public InterfacePacketHandler
 {
 public:
 	Server();
@@ -39,19 +42,19 @@ private:
 	void ProcessPacketProtocol(int playeridx);
 
 	// MOVE START 처리 함수
-	void ProcessMoveStart(int playeridx, CMessage* msg);
+	void ProcessMoveStart(int playeridx, char clientdir, short clientx, short clienty) override;
 	void BroadCast_SC_MOVE_START(int playeridx, char clientdir, short clientx, short clienty);
 	// MOVE STOP 처리 함수
-	void ProcessMoveStop(int playeridx, CMessage* msg);
+	void ProcessMoveStop(int playeridx, char clientdir, short clientx, short clienty) override;
 	void BroadCast_SC_MOVE_STOP(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK1 처리 함수
-	void ProcessAttack1(int playeridx, CMessage* msg);
+	void ProcessAttack1(int playeridx, char clientdir, short clientx, short clienty) override;
 	void BroadCast_SC_Attack1(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK2 처리 함수
-	void ProcessAttack2(int playeridx, CMessage* msg);
+	void ProcessAttack2(int playeridx, char clientdir, short clientx, short clienty) override;
 	void BroadCast_SC_Attack2(int playeridx, char clientdir, short clientx, short clienty);
 	// ATTACK3 처리 함수
-	void ProcessAttack3(int playeridx, CMessage* msg);
+	void ProcessAttack3(int playeridx, char clientdir, short clientx, short clienty) override;
 	void BroadCast_SC_Attack3(int playeridx, char clientdir, short clientx, short clienty);
 
 	// 프레임 로직 업데이트 함수

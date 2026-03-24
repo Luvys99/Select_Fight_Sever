@@ -38,7 +38,7 @@ struct PACKET_HEADER
 // 
 // 이 패킷을 받으면 자신의 ID,X,Y,HP 를 저장하고 캐릭터를 생성시켜야 한다.
 //
-struct SC_CREATE_CHARACTER
+struct SC_CREATE_MY_CHARACTER
 {
 	int id;
 	char dir; // 오른쪽, 왼쪽 방향 중에 한 방향으로 생성

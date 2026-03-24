@@ -1,6 +1,7 @@
 #include "Server.h"
 #include "PlayerList.h"
 #include "Serialize_Buffer.h"
+#include "Proxy.h"
 
 // 새로 접속한 클라이언트에게 캐릭터 정보 생성해서 보내기
 void Server::SendSC_CREATE_MY_CHARACTER(int playerlistidx, int playerid)
@@ -9,20 +10,11 @@ void Server::SendSC_CREATE_MY_CHARACTER(int playerlistidx, int playerid)
     Player* newplayer = playermgr->GetPlayer(playerlistidx);
     if (newplayer == nullptr) return;
 
-    PACKET_HEADER header;
-    header.h_code = 0x89;
-    header.h_size = sizeof(SC_CREATE_CHARACTER);
-    header.h_type = dfPACKET_SC_CREATE_MY_CHARACTER;
-
-    // 직렬화 버퍼에 먼저 데이터 저장
-    CMessage message;
-
-    // 헤더에 프로토콜 사이즈가 이미 있으므로 헤더먼저 직렬화 버퍼에 저장
-    message.PutData((char*)&header, sizeof(PACKET_HEADER));
-    message << playerid << newplayer->Getdir() << newplayer->GetX() << newplayer->GetY() << newplayer->Gethp();
+    CMessage msg;
+    proxy_create_my_character(msg, newplayer->Getid(), newplayer->Getdir(), newplayer->GetX(), newplayer->GetY(), newplayer->Gethp());
 
     // 직렬화된 데이터를 버퍼에서 송신큐로 저장
-    newplayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
+    newplayer->SendPacket(msg);
 
     return;
 }
@@ -36,9 +28,6 @@ void Server::SendSC_CREATE_OTHER_CHARACTER(int playerlistidx)
 
     int newplayerid = newplayer->Getid();
 
-    // 직렬화 버퍼에 먼저 데이터 저장
-    CMessage message;
-
     for (int i = 0; i < playermgr->GetUserCount(); i++)
     {
         Player* oldplayer = playermgr->GetPlayer(i);
@@ -46,17 +35,13 @@ void Server::SendSC_CREATE_OTHER_CHARACTER(int playerlistidx)
         // 리스트 순회 중에 내 ID를 찾게되면 패쓰
         if (oldplayer->Getid() == newplayerid) continue;
 
-        PACKET_HEADER header;
-        header.h_code = 0x89;
-        header.h_size = sizeof(SC_CREATE_OTHER_CHARACTER);
-        header.h_type = dfPACKET_SC_CREATE_OTHER_CHARACTER;
+        // 직렬화 버퍼에 먼저 데이터 저장
+        CMessage msg;
 
-        // 헤더에 프로토콜 사이즈가 이미 있으므로 헤더먼저 직렬화 버퍼에 저장
-        message.PutData((char*)&header, sizeof(PACKET_HEADER));
-        message << oldplayer->Getid() << oldplayer->Getdir() << oldplayer->GetX() << oldplayer->GetY() << oldplayer->Gethp();
+        proxy_create_my_other_character(msg, oldplayer->Getid(), oldplayer->Getdir(), oldplayer->GetX(), oldplayer->GetY(), oldplayer->Gethp());
 
         // 직렬화된 데이터를 버퍼에서 송신큐로 저장
-        newplayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
+        newplayer->SendPacket(msg);
         
     }
 
@@ -70,16 +55,9 @@ void Server::Broadcast_CREATE_OTHER_CHARACTER(int playerlistidx)
     if (newplayer == nullptr) return;
 
     // 직렬화 버퍼에 먼저 데이터 저장
-    CMessage message;
+    CMessage msg;
 
-    PACKET_HEADER header;
-    header.h_code = 0x89;
-    header.h_size = sizeof(SC_CREATE_OTHER_CHARACTER);
-    header.h_type = dfPACKET_SC_CREATE_OTHER_CHARACTER;
-
-    // 헤더에 프로토콜 사이즈가 이미 있으므로 헤더먼저 직렬화 버퍼에 저장
-    message.PutData((char*)&header, sizeof(PACKET_HEADER));
-    message << newplayer->Getid() << newplayer->Getdir() << newplayer->GetX() << newplayer->GetY() << newplayer->Gethp();
+    make_create_my_other_character(msg, newplayer->Getid(), newplayer->Getdir(), newplayer->GetX(), newplayer->GetY(), newplayer->Gethp());
 
     // 현재 존재하는 유저수만큼 리스트 순회
     for (int i = 0; i < playermgr->GetUserCount(); i++)
@@ -90,7 +68,7 @@ void Server::Broadcast_CREATE_OTHER_CHARACTER(int playerlistidx)
         if (oldplayer->Getid() == newplayer->Getid()) continue;
 
         // 기존 유저의 송신큐에 새로 접속한 클라이언트의 정보를 저장 ( 보내기 )
-        oldplayer->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
+        oldplayer->SendPacket(msg);
 
     }
 

@@ -2,6 +2,7 @@
 #include "PlayerList.h"
 #include "ScreenDefine.h"
 #include "Serialize_Buffer.h"
+#include "Proxy.h"
 
 void Server::ProcessAttackDecision(int attackerIdx, char attackType)
 {
@@ -90,15 +91,10 @@ void Server::ProcessAttackDecision(int attackerIdx, char attackType)
 
 void Server::Broadcast_SC_DAMAGE(int attackid, int targetid , char hp)
 {
-    PACKET_HEADER header;
-    header.h_code = 0x89; 
-    header.h_size = sizeof(SC_DAMAGE);
-    header.h_type = dfPACKET_SC_DAMAGE;
 
-    CMessage message;
-    message.PutData((char*)&header, sizeof(PACKET_HEADER));
+    CMessage msg;
 
-    message << attackid << targetid << hp;
+    proxy_damage(msg, attackid, targetid, hp);
 
     // 모든 접속자에게 전송
     for (int i = 0; i < playermgr->GetUserCount(); i++)
@@ -107,6 +103,6 @@ void Server::Broadcast_SC_DAMAGE(int attackid, int targetid , char hp)
         if (p == nullptr) continue;
 
         // Send 큐에 헤더와 바디 밀어넣기
-        p->SendQ.Enqueue((char*)message.GetReadPtr(), message.GetUseDataSize());
+        p->SendPacket(msg);
     }
 }

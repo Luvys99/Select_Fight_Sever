@@ -1,6 +1,7 @@
 #pragma once
 #include "NetStd.h"
 #include "PacketDefine.h"
+#include "Serialize_Buffer.h"
 
 class Player
 {
@@ -32,6 +33,12 @@ public:
 	// 플레이어 공격 쿨타임 측정
 	ULONGLONG GetLastAttackTime() { return lastAttackTime; }
 	void SetLastAttackTime(ULONGLONG time) { lastAttackTime = time; }
+
+	// 송신 함수
+	void SendPacket(CMessage& msg)
+	{
+		SendQ.Enqueue((char*)msg.GetReadPtr(), msg.GetUseDataSize());
+	}
 
 public:
 	RingBuffer RecvQ;
